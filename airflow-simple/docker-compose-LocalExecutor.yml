@@ -1,0 +1,51 @@
+version: '3.7'
+services:
+    # postgres:
+    #     image: postgres:9.6
+    #     environment:
+    #         - POSTGRES_USER=airflow
+    #         - POSTGRES_PASSWORD=airflow
+    #         - POSTGRES_DB=airflow
+    #     logging:
+    #         options:
+    #             max-size: 10m
+    #             max-file: "3"
+
+    webserver:
+        image: nubee/airflow:v1
+        restart: always
+        # depends_on:
+        #     - postgres
+        environment:
+            - LOAD_EX=n
+            - EXECUTOR=Local
+            - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql://airflow:username@domain:5432/airflow
+            - AIRFLOW__CORE__FERNET_KEY=<<FERNET_KEY>>
+            - AIRFLOW__WEBSERVER__AUTHENTICATE=True
+            - AIRFLOW__WEBSERVER__RBAC=True
+            - AIRFLOW__SMTP__SMTP_HOST=email-smtp.google.com
+            - AIRFLOW__SMTP__SMTP_PORT=25
+            - AIRFLOW__SMTP__SMTP_USER=<<USER>>
+            - AIRFLOW__SMTP__SMTP_PASSWORD=<<PWD>>
+            - AIRFLOW__SMTP__SMTP_MAIL_FROM=alert@google.com
+
+
+        logging:
+            options:
+                max-size: 10m
+                max-file: "3"
+        volumes:
+            - /airflow/dags:/usr/local/airflow/dags
+            - /airflow/logs:/usr/local/airflow/logs
+            - /airflow/keys:/usr/local/airflow/keys
+            - /airflow/projects:/usr/local/airflow/projects
+                #     - ./plugins:/usr/local/airflow/plugins
+        ports:
+            - "8080:8080"
+
+        command: webserver
+        healthcheck:
+            test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+            interval: 30s
+            timeout: 30s
+            retries: 3
